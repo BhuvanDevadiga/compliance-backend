@@ -1,0 +1,33 @@
+{
+  "type": "GST",
+  "description": "Goods and Services Tax compliance for registered businesses",
+  "returns": [
+    {
+      "code": "GSTR_1",
+      "name": "GSTR-1",
+      "frequency": "monthly",
+      "due_day": 11,
+      "penalty": {
+        "late_fee_per_day": 50,
+        "max": 10000
+      }
+    },
+    {
+      "code": "GSTR_3B",
+      "name": "GSTR-3B",
+      "frequency": "monthly",
+      "due_day": 20,
+      "penalty": {
+        "late_fee_per_day": 50,
+        "max": 10000
+      }
+    },
+    {
+      "code": "GSTR_9",
+      "name": "GSTR-9 (Annual)",
+      "frequency": "annual",
+      "due_month": 12,
+      "due_day": 31
+    }
+  ]
+}

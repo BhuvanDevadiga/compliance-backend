@@ -1,0 +1,8 @@
+{
+  "gst": {
+    "applies_if": ["gst_registered"]
+  },
+  "tds": {
+    "applies_if": ["has_employees_or_contractors"]
+  }
+}

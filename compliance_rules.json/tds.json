@@ -1,0 +1,40 @@
+{
+  "type": "TDS",
+  "description": "Tax Deducted at Source compliance",
+  "returns": [
+    {
+      "code": "TDS_PAYMENT",
+      "name": "Monthly TDS Payment",
+      "frequency": "monthly",
+      "due_day": 7
+    },
+    {
+      "code": "TDS_Q1",
+      "name": "TDS Return Q1",
+      "frequency": "quarterly",
+      "due_month": 7,
+      "due_day": 31
+    },
+    {
+      "code": "TDS_Q2",
+      "name": "TDS Return Q2",
+      "frequency": "quarterly",
+      "due_month": 10,
+      "due_day": 31
+    },
+    {
+      "code": "TDS_Q3",
+      "name": "TDS Return Q3",
+      "frequency": "quarterly",
+      "due_month": 1,
+      "due_day": 31
+    },
+    {
+      "code": "TDS_Q4",
+      "name": "TDS Return Q4",
+      "frequency": "quarterly",
+      "due_month": 5,
+      "due_day": 31
+    }
+  ]
+}
