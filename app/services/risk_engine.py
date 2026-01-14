@@ -1,63 +1,42 @@
-STATUS_FACTOR = {
-    "implemented": 0,
-    "partial": 0.5,
-    "missing": 1
-}
+def calculate_risk_score(payload):
+    score = 0
+    reasons = []
 
-EVIDENCE_PENALTY = 0.3
+    # Company size
+    if payload.company_size < 10:
+        score += 30
+        reasons.append("Very small company")
+    elif payload.company_size < 50:
+        score += 20
+        reasons.append("Small company")
+    else:
+        score += 10
+        reasons.append("Medium/Large company")
 
+    # Industry risk
+    high_risk_industries = {"finance", "healthcare", "crypto"}
+    if payload.industry.lower() in high_risk_industries:
+        score += 30
+        reasons.append(f"High-risk industry: {payload.industry}")
+    else:
+        score += 10
+        reasons.append("Low-risk industry")
 
-def calculate_risk_score(controls, answers):
-    total_risk = 0
-    breakdown = []
+    # Compliance docs
+    if not payload.has_gst:
+        score += 20
+        reasons.append("GST not registered")
+    if not payload.has_pan:
+        score += 20
+        reasons.append("PAN missing")
 
-    for control in controls:
-        answer = answers.get(control["id"])
+    score = min(score, 100)
 
-        if not answer:
-            # No response = worst case
-            risk = control["weight"] * 1.2
-        else:
-            status_factor = STATUS_FACTOR[answer["status"]]
-            risk = control["weight"] * status_factor
+    if score >= 70:
+        level = "HIGH"
+    elif score >= 40:
+        level = "MEDIUM"
+    else:
+        level = "LOW"
 
-            if not answer["evidence_uploaded"]:
-                risk += control["weight"] * EVIDENCE_PENALTY
-
-        breakdown.append({
-            "control": control["name"],
-            "risk": round(risk, 2)
-        })
-
-        total_risk += risk
-
-    normalized = min(100, round(total_risk, 2))
-    return normalized, breakdown
-
-from app.services.regulation_config import get_weight_multiplier
-
-def calculate_risk_score(controls, answers, regulation: str):
-    total_risk = 0
-    breakdown = []
-
-    for control in controls:
-        multiplier = get_weight_multiplier(regulation, control["name"])
-        weight = control["weight"] * multiplier
-
-        answer = answers.get(control["id"])
-        if not answer:
-            risk = weight * 1.2
-        else:
-            status_factor = STATUS_FACTOR[answer["status"]]
-            risk = weight * status_factor
-            if not answer["evidence_uploaded"]:
-                risk += weight * EVIDENCE_PENALTY
-
-        breakdown.append({
-            "control": control["name"],
-            "risk": round(risk, 2)
-        })
-        total_risk += risk
-
-    return min(100, round(total_risk, 2)), breakdown
-
+    return score, level, reasons
