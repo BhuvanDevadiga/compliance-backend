@@ -10,5 +10,5 @@ def calculate_risk(payload: dict, version: str = "v1.0"):
     if not ruleset_cls:
         raise ValueError(f"Unknown ruleset version: {version}")
 
-    ruleset = ruleset_cls()        
+    ruleset = ruleset_cls()    
     return ruleset.calculate(payload)
