@@ -1,0 +1,45 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "VERY_SMALL_COMPANY",
+      "field": "company_size",
+      "operator": "lt",
+      "value": 10,
+      "score": 30,
+      "reason": "Very small company"
+    },
+    {
+      "id": "SMALL_COMPANY",
+      "field": "company_size",
+      "operator": "lt",
+      "value": 50,
+      "score": 20,
+      "reason": "Small company"
+    },
+    {
+      "id": "HIGH_RISK_INDUSTRY",
+      "field": "industry",
+      "operator": "in",
+      "value": ["finance", "healthcare", "crypto"],
+      "score": 30,
+      "reason": "High-risk industry"
+    },
+    {
+      "id": "GST_MISSING",
+      "field": "has_gst",
+      "operator": "eq",
+      "value": false,
+      "score": 20,
+      "reason": "GST not registered"
+    },
+    {
+      "id": "PAN_MISSING",
+      "field": "has_pan",
+      "operator": "eq",
+      "value": false,
+      "score": 20,
+      "reason": "PAN missing"
+    }
+  ]
+}

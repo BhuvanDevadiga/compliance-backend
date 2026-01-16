@@ -16,6 +16,8 @@ class RiskAssessment(Base):
     risk_score = Column(Integer, nullable=False)
     risk_level = Column(String, nullable=False)
     reasons = Column(Text, nullable=False)
+    ruleset_version = Column(String, nullable=False)
+
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
