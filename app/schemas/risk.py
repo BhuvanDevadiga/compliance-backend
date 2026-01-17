@@ -1,7 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List
-from pydantic import BaseModel, Field
 
 
 class RiskScoreRequest(BaseModel):
@@ -14,10 +13,12 @@ class RiskScoreRequest(BaseModel):
 class RiskScoreResponse(BaseModel):
     risk_score: int
     risk_level: str
-    reasons: List[str]   
+    reasons: List[str]
 
 
 class RiskScoreOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     company_size: int
     industry: str
@@ -26,8 +27,6 @@ class RiskScoreOut(BaseModel):
     risk_score: int
     risk_level: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True   
+  
 
 
