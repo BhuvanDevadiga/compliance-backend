@@ -1,0 +1,17 @@
+version: v1.2
+
+company_size:
+  lt_10: 30
+
+industry:
+  finance: 40
+  insurance: 40
+  crypto: 60
+
+compliance:
+  missing_gst: 20
+  missing_pan: 10
+
+thresholds:
+  high: 70
+  medium: 40

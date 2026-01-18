@@ -1,0 +1,18 @@
+{
+  "company_size": {
+    "small": { "max": 10, "score": 30 }
+  },
+  "industry": {
+    "finance": 40,
+    "insurance": 40,
+    "crypto": 50
+  },
+  "documents": {
+    "gst_missing": 20,
+    "pan_missing": 10
+  },
+  "thresholds": {
+    "HIGH": 70,
+    "MEDIUM": 40
+  }
+}
