@@ -1,8 +1,11 @@
 from app.services.risk_rules.base import RiskRuleset
 from app.services.risk_rules.loader import load_rules
 
-class RiskRulesV1_2(RiskRuleset):
+class RiskRulesV12(RiskRuleset):
     version = "v1.2"
+    status = "active"       
+    introduced_on = "2026-01-17"
+    description = "Crypto + enhanced industry risk logic"
 
     def __init__(self):
         self.rules = load_rules("v1.2")

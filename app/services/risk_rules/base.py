@@ -1,10 +1,16 @@
 
-
-from typing import Tuple, List
-from app.schemas.risk import RiskScoreRequest
-
 class RiskRuleset:
-    version: str
+    version: str = "unknown"
+    status: str = "active"       
+    introduced_on: str = "unknown"
+    description: str = ""
 
-    def calculate(self, payload: RiskScoreRequest) -> Tuple[int, str, List[str]]:
-        raise NotImplementedError
+    @classmethod
+    def metadata(cls):
+        return {
+            "version": cls.version,
+            "status": cls.status,
+            "introduced_on": cls.introduced_on,
+            "description": cls.description,
+        }
+

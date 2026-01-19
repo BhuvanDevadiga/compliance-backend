@@ -5,8 +5,11 @@ from app.services.risk_rules.base import RiskRuleset
 CONFIG_PATH = Path(__file__).parent / "configs" / "v1_1.json"
 
 
-class RiskRulesV1_1(RiskRuleset):
+class RiskRulesV11(RiskRuleset):
     version = "v1.1"
+    status = "active"
+    introduced_on = "2026-01-05"
+    description = "Crypto industry detection"
 
     def __init__(self):
         with open(CONFIG_PATH) as f:

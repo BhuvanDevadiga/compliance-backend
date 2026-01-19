@@ -9,7 +9,6 @@ def test_finance_small_company():
         "has_pan": False
     }
 
-    score, level, reasons = calculate_risk(payload, version="v1.0")
-
+    score, level, reasons = calculate_risk(payload, version="v1.0",  allow_frozen=True)
     assert score >= 70
     assert level == "HIGH"

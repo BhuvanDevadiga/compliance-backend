@@ -1,8 +1,11 @@
 from app.services.risk_rules.base import RiskRuleset
 
 
-class RiskRulesV1(RiskRuleset):
+class RiskRulesV10(RiskRuleset):
     version = "v1.0"
+    status = "frozen" 
+    introduced_on = "2025-12-01"
+    description = "Initial GST/PAN/company-size based scoring"
 
     def calculate(self, payload: dict):
         risk_score = 0
