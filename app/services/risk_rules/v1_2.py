@@ -1,50 +1,56 @@
-from app.services.risk_rules.base import RiskRuleset
-from app.services.risk_rules.loader import load_rules
+from typing import List, Tuple
+from app.services.risk_rules.base import RiskRuleset, RuleHit, RiskDecision
+
 
 class RiskRulesV12(RiskRuleset):
     version = "v1.2"
-    status = "active"       
-    introduced_on = "2026-01-17"
-    description = "Crypto + enhanced industry risk logic"
+    status = "active"
+    introduced_on = "2026-01-15"
+    description = "Risk scoring with rule-hit audit trail"
 
-    def __init__(self):
-        self.rules = load_rules("v1.2")
-
-    def calculate(self, payload: dict):
+    @classmethod
+    def evaluate_with_trace(cls, payload: dict) -> RiskDecision:
         score = 0
-        reasons = []
+        reasons: List[str] = []
+        hits: List[RuleHit] = []
 
-        company_size = payload.get("company_size")
+        # ---- Rule: Company Size ----
+        company_size = payload.get("company_size", 0)
+        if company_size < 10:
+            score += 20
+            reasons.append("Very small company")
+            hits.append(RuleHit(rule="SMALL_COMPANY", points=20))
+
+        # ---- Rule: Industry Risk ----
         industry = payload.get("industry", "").lower()
+        if industry in {"crypto", "finance"}:
+            score += 30
+            reasons.append("High-risk industry")
+            hits.append(RuleHit(rule="HIGH_RISK_INDUSTRY", points=30))
 
-        # Company size rule
-        if company_size is not None and company_size < 10:
-            score += self.rules["company_size"]["lt_10"]
-            reasons.append("Small company")
-
-        # Industry rule
-        industry_risk = self.rules["industry"].get(industry)
-        if industry_risk:
-            score += industry_risk
-            reasons.append(f"High-risk industry: {industry}")
-
-        # Compliance rules
-        if not payload.get("has_gst"):
-            score += self.rules["compliance"]["missing_gst"]
+        # ---- Rule: GST ----
+        if not payload.get("has_gst", True):
+            score += 25
             reasons.append("GST not registered")
+            hits.append(RuleHit(rule="NO_GST", points=25))
 
-        if not payload.get("has_pan"):
-            score += self.rules["compliance"]["missing_pan"]
-            reasons.append("PAN not registered")
+        # ---- Rule: PAN ----
+        if not payload.get("has_pan", True):
+            score += 15
+            reasons.append("PAN missing")
+            hits.append(RuleHit(rule="NO_PAN", points=15))
 
-        # Risk level
-        thresholds = self.rules["thresholds"]
-
-        if score >= thresholds["high"]:
-            level = "HIGH"
-        elif score >= thresholds["medium"]:
-            level = "MEDIUM"
+        # ---- Risk Level ----
+        if score >= 70:
+            level = "high"
+        elif score >= 40:
+            level = "medium"
         else:
-            level = "LOW"
+            level = "low"
 
-        return score, level, reasons
+        return RiskDecision(
+            score=score,
+            level=level,
+            reasons=reasons,
+            rules_fired=hits
+        )

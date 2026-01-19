@@ -1,7 +1,12 @@
-from app.services.risk_rules_v1 import calculate_risk_v1
+from app.services.risk_rules.base import RiskDecision, RULESETS
 
-def calculate_risk(payload: dict, version: str = "v1.0"):
-    if version == "v1.0":
-        return calculate_risk_v1(payload)
+def calculate_risk(payload: dict, version: str):
+    ruleset = RULESETS[version]
 
-    raise ValueError(f"Unsupported ruleset version: {version}")
+    # TRACE-enabled ruleset (v1.2+)
+    if hasattr(ruleset, "evaluate_with_trace"):
+        return ruleset.evaluate_with_trace(payload)
+
+    # Legacy rulesets (v1.0, v1.1)
+    score, level, reasons = ruleset.evaluate(payload)
+    return score, level, reasons

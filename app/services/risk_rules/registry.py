@@ -8,6 +8,8 @@ RULESETS = {
     "v1.2": RiskRulesV12,
 }
 
+from app.services.risk_rules.base import RiskDecision
+
 def calculate_risk(
     payload: dict,
     version: str = "v1.2",
@@ -26,8 +28,20 @@ def calculate_risk(
     if status == "frozen" and not allow_frozen:
         raise ValueError(f"Ruleset {version} is frozen")
 
-    ruleset = ruleset_cls()
-    return ruleset.calculate(payload)
+    # ✅ v1.2+ (traceable rules)
+    if hasattr(ruleset_cls, "evaluate_with_trace"):
+        return ruleset_cls.evaluate_with_trace(payload)
+
+    # ✅ Legacy rules (v1.0, v1.1)
+    score, level, reasons = ruleset_cls.calculate(payload)
+
+    return RiskDecision(
+        score=score,
+        level=level,
+        reasons=reasons,
+        rules_fired=[],
+    )
+
 
 def list_rule_versions():
     return [
