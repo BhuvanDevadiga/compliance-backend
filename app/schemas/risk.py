@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
-from typing import List
+from typing import Literal, List
 
 
 class RiskScoreRequest(BaseModel):
-    company_size: int = Field(..., gt=0, le=10000)
-    industry: str = Field(..., min_length=2)
+    company_size: str = Literal["micro", "small", "medium", "large"]
+    industry: str = Field
     has_gst: bool
     has_pan: bool
 
@@ -20,7 +20,7 @@ class RiskScoreOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    company_size: int
+    company_size: str
     industry: str
     has_gst: bool
     has_pan: bool
