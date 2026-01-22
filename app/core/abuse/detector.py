@@ -1,18 +1,14 @@
-from fastapi import Request
-from slowapi.util import get_remote_address
-from app.core.abuse.state import record_hit
-import hashlib
+# core/abuse/detector.py
+from .state import recent_requests
 
+CAPTCHA_THRESHOLD = 10
+BLOCK_THRESHOLD = 20
 
-def build_fingerprint(request: Request) -> str:
-    ip = get_remote_address(request)
-    ua = request.headers.get("user-agent", "unknown")
-    path = request.url.path
+def detect_abuse(ip: str):
+    count = len(recent_requests(ip))
 
-    raw = f"{ip}:{ua}:{path}"
-    return hashlib.sha256(raw.encode()).hexdigest()
-
-
-def is_suspicious(request: Request) -> bool:
-    fingerprint = build_fingerprint(request)
-    return record_hit(fingerprint)
+    if count >= BLOCK_THRESHOLD:
+        return "block"
+    if count >= CAPTCHA_THRESHOLD:
+        return "captcha"
+    return "allow"

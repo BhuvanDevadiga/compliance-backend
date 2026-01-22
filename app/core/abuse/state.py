@@ -1,22 +1,16 @@
-import time
-from collections import defaultdict, deque
+# core/abuse/state.py
+from collections import defaultdict
+from time import time
 
-# fingerprint -> timestamps
-_HITS = defaultdict(deque)
+IP_STATE = defaultdict(list)
 
-WINDOW_SECONDS = 10
-MAX_HITS = 10
+def record_request(ip: str):
+    IP_STATE[ip].append(time())
 
+def recent_requests(ip: str, window: int = 60):
+    now = time()
 
-def record_hit(fingerprint: str) -> bool:
-   
-    now = time.time()
-    q = _HITS[fingerprint]
+    # prune old entries
+    IP_STATE[ip] = [t for t in IP_STATE[ip] if now - t < window]
 
-    
-    while q and q[0] < now - WINDOW_SECONDS:
-        q.popleft()
-
-    q.append(now)
-
-    return len(q) > MAX_HITS
+    return IP_STATE[ip]

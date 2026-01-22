@@ -22,7 +22,7 @@ COMPANY_SIZE_MAP = {
 router = APIRouter(
     prefix="/api/public/risk",
     tags=["Public Risk"],
-    dependencies=[Depends(get_current_tenant)],
+    #dependencies=[Depends(get_current_tenant)], 
 )
 @router.post("/score", response_model=RiskScoreResponse)
 @limiter.limit("100/minute")
@@ -60,7 +60,8 @@ def calculate_risk_api(
     }
 @router.get("/history", response_model=list[RiskScoreOut])
 def get_risk_history(
-    tenant: Tenant = Depends(get_current_tenant),
+     tenant: Tenant = Depends(get_current_tenant),
+    
     db: Session = Depends(get_db),
 ):
     return (
@@ -93,3 +94,4 @@ def risk_trace(
         ],
         "evaluated_at": datetime.utcnow().isoformat(),
     }
+
