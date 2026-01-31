@@ -11,6 +11,8 @@ class AbuseProtectionMiddleware(BaseHTTPMiddleware):
 
         record_request(ip)
         decision = detect_abuse(ip)
+        request.state.abuse_decision = decision
+
 
         if decision == "block":
             return JSONResponse(

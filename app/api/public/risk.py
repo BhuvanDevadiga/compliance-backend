@@ -21,9 +21,10 @@ COMPANY_SIZE_MAP = {
 
 router = APIRouter(
     prefix="/api/public/risk",
-    tags=["Public Risk"],
-    #dependencies=[Depends(get_current_tenant)], 
+    tags=["public-risk"]
 )
+
+
 @router.post("/score", response_model=RiskScoreResponse)
 @limiter.limit("100/minute")
 def calculate_risk_api(
@@ -32,32 +33,35 @@ def calculate_risk_api(
     db: Session = Depends(get_db),
     tenant: Tenant = Depends(get_current_tenant),
 ):
-    data = payload.dict()
-    data["company_size"] = COMPANY_SIZE_MAP.get(data["company_size"], 0)
+    try:
+        data = payload.dict()
+        data["company_size"] = COMPANY_SIZE_MAP.get(data["company_size"], 0)
 
-    decision = calculate_risk(data, version="v1.2")
+        decision = calculate_risk(data, version="v1.2")
 
+        assessment = RiskAssessment(
+            tenant_id=tenant.id,
+            company_size=payload.company_size,
+            industry=payload.industry,
+            has_gst=payload.has_gst,
+            has_pan=payload.has_pan,
+            risk_score=decision.score,
+            risk_level=decision.level,
+            reasons=json.dumps(decision.reasons),
+            ruleset_version="v1.2",
+        )
 
-    assessment = RiskAssessment(
-        tenant_id=tenant.id,
-        company_size=payload.company_size,
-        industry=payload.industry,
-        has_gst=payload.has_gst,
-        has_pan=payload.has_pan,
-        risk_score=decision.score,
-        risk_level=decision.level,
-        reasons=json.dumps(decision.reasons),
-        ruleset_version="v1.2",
-    )
+        db.add(assessment)
+        db.commit()
 
-    db.add(assessment)
-    db.commit()
-
-    return {
-        "risk_score": decision.score,
-        "risk_level": decision.level,
-        "reasons": decision.reasons,
-    }
+        return {
+            "risk_score": decision.score,
+            "risk_level": decision.level,
+            "reasons": decision.reasons,
+        }
+    except Exception as e:
+        db.rollback()
+        raise
 @router.get("/history", response_model=list[RiskScoreOut])
 def get_risk_history(
      tenant: Tenant = Depends(get_current_tenant),
@@ -76,22 +80,30 @@ def risk_trace(
     payload: RiskScoreRequest,
     tenant: Tenant = Depends(get_current_tenant),
 ):
-    data = payload.dict()
-    data["company_size"] = COMPANY_SIZE_MAP.get(data["company_size"], 0)
+    try:
+        data = payload.dict()
+        data["company_size"] = COMPANY_SIZE_MAP.get(data["company_size"], 0)
 
-    decision = calculate_risk(
-        data,
-        version="v1.2",
-    )
-    return {
-        "version": "v1.2",
-        "risk_score": decision.score,
-        "risk_level": decision.level,
-        "reasons": decision.reasons,
-        "rules_fired": [
-            {"rule": r.rule, "points": r.points}
-            for r in decision.rules_fired
-        ],
-        "evaluated_at": datetime.utcnow().isoformat(),
-    }
+        decision = calculate_risk(
+            data,
+            version="v1.2",
+        )
+        
+        rules_fired = []
+        if hasattr(decision, 'rules_fired') and decision.rules_fired:
+            rules_fired = [
+                {"rule": r.rule, "points": r.points}
+                for r in decision.rules_fired
+            ]
+        
+        return {
+            "version": "v1.2",
+            "risk_score": decision.score,
+            "risk_level": decision.level,
+            "reasons": decision.reasons,
+            "rules_fired": rules_fired,
+            "evaluated_at": datetime.utcnow().isoformat(),
+        }
+    except Exception as e:
+        raise
 

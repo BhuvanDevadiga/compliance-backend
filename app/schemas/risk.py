@@ -4,8 +4,8 @@ from typing import Literal, List
 
 
 class RiskScoreRequest(BaseModel):
-    company_size: str = Literal["micro", "small", "medium", "large"]
-    industry: str = Field
+    company_size: Literal["micro", "small", "medium", "large"]
+    industry: str
     has_gst: bool
     has_pan: bool
 
@@ -26,6 +26,8 @@ class RiskScoreOut(BaseModel):
     has_pan: bool
     risk_score: int
     risk_level: str
+    reasons: str
+    ruleset_version: str
     created_at: datetime
   
 

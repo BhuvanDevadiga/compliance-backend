@@ -1,28 +1,31 @@
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import get_db
 from app.models.tenant import Tenant
+from app.services.quota_enforcer import enforce_daily_quota
+
 
 def get_current_tenant(
-    x_tenant_id: str = Header(..., alias="X-Tenant-ID"),
     x_api_key: str = Header(..., alias="X-API-Key"),
     db: Session = Depends(get_db),
-):
+) -> Tenant:
     tenant = (
         db.query(Tenant)
-        .filter(
-            Tenant.tenant_id == x_tenant_id,
-            Tenant.api_key == x_api_key,
-            Tenant.is_active == True,
-        )
+        .filter(Tenant.api_key == x_api_key)
         .first()
     )
 
-    if not tenant:
+    if not tenant or not tenant.is_active:
         raise HTTPException(
             status_code=401,
-            detail="Invalid tenant or API key",
+            detail="Invalid API key",
         )
+
+    # 🔒 THIS IS THE QUOTA ENFORCEMENT POINT
+    enforce_daily_quota(
+        db=db,
+        tenant_id=tenant.id,
+    )
 
     return tenant
