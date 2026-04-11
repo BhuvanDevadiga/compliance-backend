@@ -8,12 +8,14 @@ from slowapi.util import get_remote_address
 from slowapi import _rate_limit_exceeded_handler
 
 from app.schemas.risk import RiskScoreRequest, RiskScoreResponse, RiskScoreOut
+from app.core.redis_client import redis_client
 from app.services.risk_rules.registry import calculate_risk
 from app.db.session import get_db
 from app.core.auth import get_current_tenant
-from app.core.rate_limiter import limiter
+from app.core.rate_limiter import limiter, tenant_rate_limit
 from app.models.tenant import Tenant
 from app.models.risk_assessment import RiskAssessment
+
 
 COMPANY_SIZE_MAP = {
     "micro": 1,
@@ -43,7 +45,7 @@ def get_risk_history(
 
 
 @router.post("/score", response_model=RiskScoreResponse)
-@limiter.limit("100/minute") 
+@limiter.limit(tenant_rate_limit)
 def calculate_risk_api(
     request: Request,
     payload: RiskScoreRequest,
@@ -57,6 +59,7 @@ def calculate_risk_api(
         normalized_payload,
         version="v1.2"
     )
+    redis_client.setex(f"risk_score:{tenant.tenant_id}", 300, decision.score)
 
     assessment = RiskAssessment(
         tenant_id=tenant.tenant_id,
@@ -72,6 +75,7 @@ def calculate_risk_api(
 
     db.add(assessment)
     db.commit()
+
 
     return {
         "risk_score": decision.score,
@@ -94,6 +98,7 @@ def risk_trace(
         normalized_payload,
         version="v1.2"
     )
+    redis_client.setex(f"risk_score:{tenant.tenant_id}", 300, decision.score)
 
     return {
         "version": "v1.2",

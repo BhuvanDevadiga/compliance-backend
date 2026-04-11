@@ -1,18 +1,15 @@
 from sqlalchemy.orm import Session
-from app.models.risk import RiskAssessment
+from app.models.risk_assessment import RiskAssessment
+
 
 def get_risk_history(
     db: Session,
-    company_id: int,
-    regulation: str,
-    limit: int = 10
+    tenant_id: str,
+    limit: int = 10,
 ):
     return (
         db.query(RiskAssessment)
-        .filter(
-            RiskAssessment.company_id == company_id,
-            RiskAssessment.regulation == regulation
-        )
+        .filter(RiskAssessment.tenant_id == tenant_id)
         .order_by(RiskAssessment.created_at.desc())
         .limit(limit)
         .all()

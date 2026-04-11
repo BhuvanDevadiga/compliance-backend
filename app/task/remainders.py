@@ -1,5 +1,5 @@
 from datetime import date, timedelta
-from app.celery_app import celery_app
+from celery_app import celery_app
 from app.database import SessionLocal
 from app.model import UserCompliance
 

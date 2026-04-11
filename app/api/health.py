@@ -6,6 +6,7 @@ router = APIRouter(tags=["Health"])
 def health_check():
     return {
         "status": "ok",
-        "service": "compliance-backend"
+       
     }
+
 

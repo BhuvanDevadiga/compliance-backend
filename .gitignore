@@ -1,18 +1,27 @@
-# Virtual environment
+# Virtual env
 .venv/
-
-# Environment variables
-.env
 
 # Python cache
 __pycache__/
 *.pyc
 
-# OS files
-.DS_Store
+# Local env
+.env
+
+# Local DB
+*.db
 
 # Logs
 *.log
 
-# SQLite (if ever used)
-*.db
+# OS
+.DS_Store
+
+# ML models
+*.pkl
+
+# Frontend
+node_modules/
+
+# Generated files
+*.pdf

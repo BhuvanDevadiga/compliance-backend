@@ -1,11 +1,18 @@
 from logging.config import fileConfig
+import os
+from pathlib import Path
+from dotenv import load_dotenv
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 from app.db.base import Base
+from app.db.database import resolve_database_url
 import app.models
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env", encoding="utf-8-sig")
 
 config = context.config
 
@@ -13,6 +20,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
+
+
+def get_database_url() -> str:
+    return resolve_database_url(os.getenv("DATABASE_URL"))
 
 
 def run_migrations_offline() -> None:
@@ -27,7 +38,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_database_url()
+    config.set_main_option("sqlalchemy.url", url)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -46,6 +58,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    url = get_database_url()
+    config.set_main_option("sqlalchemy.url", url)
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

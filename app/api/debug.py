@@ -13,4 +13,4 @@ def quota_debug(
     tenant=Depends(get_current_tenant),
     db: Session = Depends(get_db),
 ):
-    return get_quota_snapshot(db, tenant.id)
+    return get_quota_snapshot(db, tenant.tenant_id)

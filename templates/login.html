@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Compliance SaaS Login</title>
+</head>
+<body style="display:flex; justify-content:center; align-items:center; height:100vh; font-family:sans-serif;">
+  <div style="width:300px;">
+    <h2>Login</h2>
+    <input id="email" placeholder="Email" style="width:100%; margin-bottom:10px; padding:8px;">
+    <input id="password" type="password" placeholder="Password" style="width:100%; margin-bottom:10px; padding:8px;">
+    <button onclick="login()" style="width:100%; padding:10px;">Login</button>
+    <p id="error" style="color:red;"></p>
+  </div>
+
+<script>
+async function validateExistingToken() {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/dashboard", {
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        });
+
+        if (response.ok) {
+            window.location.href = "/dashboard-ui";
+            return;
+        }
+    } catch (_) {
+    }
+
+    localStorage.removeItem("token");
+}
+
+async function login() {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    const res = await fetch("/auth/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({email, password})
+    });
+
+    if (!res.ok) {
+        document.getElementById("error").innerText = "Invalid credentials";
+        return;
+    }
+
+    const data = await res.json();
+    localStorage.setItem("token", data.access_token);
+    window.location.href = "/dashboard-ui";
+}
+
+validateExistingToken();
+</script>
+</body>
+</html>

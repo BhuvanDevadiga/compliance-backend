@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold mb-6">Dashboard</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white p-5 rounded-xl shadow">
+        <p class="text-gray-500">Audit Readiness</p>
+        <h2 id="readiness" class="text-2xl font-bold">--</h2>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow">
+        <p class="text-gray-500">Average Risk</p>
+        <h2 id="avgRisk" class="text-2xl font-bold">--</h2>
+    </div>
+    <div class="bg-white p-5 rounded-xl shadow">
+        <p class="text-gray-500">Total Controls</p>
+        <h2 id="totalControls" class="text-2xl font-bold">--</h2>
+    </div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+    <canvas id="riskChart"></canvas>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow mb-6">
+    <h2 class="text-lg font-semibold mb-4">Risk Trend Over Time</h2>
+    <div id="trendChartContainer">
+        <canvas id="trendChart"></canvas>
+    </div>
+</div>
+
+<div class="bg-white p-6 rounded-xl shadow">
+    <table class="w-full text-left border-collapse">
+        <thead>
+            <tr class="border-b text-gray-500">
+                <th class="py-3 pr-4">Control ID</th>
+                <th class="py-3 pr-4">Failure Probability</th>
+                <th class="py-3 pr-4">Risk Level</th>
+                <th class="py-3">Last Updated</th>
+            </tr>
+        </thead>
+        <tbody id="controlsTableBody">
+            <tr>
+                <td colspan="4" class="py-4 text-gray-500">Loading dashboard...</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+    window.location.href = "/login";
+}
+
+let riskChartInstance = null;
+let trendChartInstance = null;
+
+function redirectToLogin() {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+}
+
+async function fetchJson(url) {
+    const response = await fetch(url, {
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("token")
+        }
+    });
+
+    let payload = null;
+    try {
+        payload = await response.json();
+    } catch {
+        payload = null;
+    }
+
+    if (response.status === 401) {
+        redirectToLogin();
+        throw new Error("Session expired. Please log in again.");
+    }
+
+    if (!response.ok) {
+        const detail = payload && payload.detail ? payload.detail : `Request failed with status ${response.status}`;
+        throw new Error(detail);
+    }
+
+    return payload;
+}
+
+function renderRiskChart(distribution) {
+    const canvas = document.getElementById("riskChart");
+    const ctx = canvas.getContext("2d");
+
+    if (riskChartInstance) {
+        riskChartInstance.destroy();
+    }
+
+    riskChartInstance = new Chart(ctx, {
+        type: "bar",
+        data: {
+            labels: ["High Risk", "Medium Risk", "Low Risk"],
+            datasets: [{
+                label: "Number of Controls",
+                data: [
+                    distribution.high,
+                    distribution.medium,
+                    distribution.low
+                ],
+                backgroundColor: [
+                    "#ef4444",
+                    "#f59e0b",
+                    "#22c55e"
+                ],
+                borderRadius: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderTrendChart(data) {
+    const container = document.getElementById("trendChartContainer");
+
+    if (!Array.isArray(data) || data.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">No trend data available yet.</p>';
+        return;
+    }
+
+    container.innerHTML = '<canvas id="trendChart"></canvas>';
+    const canvas = document.getElementById("trendChart");
+    const ctx = canvas.getContext("2d");
+
+    if (trendChartInstance) {
+        trendChartInstance.destroy();
+    }
+
+    trendChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.map((point) => {
+                const date = new Date(point.created_at);
+                return date.toLocaleDateString();
+            }),
+            datasets: [{
+                label: "Risk Score",
+                data: data.map((point) => point.risk_score),
+                borderColor: "#2563eb",
+                backgroundColor: "rgba(37, 99, 235, 0.12)",
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1
+                }
+            }
+        }
+    });
+}
+
+async function loadSummary() {
+    const data = await fetchJson("/dashboard");
+    document.getElementById("readiness").innerText = `${(data.audit_readiness * 100).toFixed(1)}%`;
+    document.getElementById("avgRisk").innerText = `${(data.average_risk * 100).toFixed(1)}%`;
+    document.getElementById("totalControls").innerText = data.total_controls;
+    renderRiskChart(data.distribution);
+}
+
+async function loadControls() {
+    const controls = await fetchJson("/dashboard/controls");
+    const tbody = document.getElementById("controlsTableBody");
+
+    if (!Array.isArray(controls) || controls.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="py-4 text-gray-500">No controls available.</td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = controls.map((control) => {
+        let riskClass = "text-gray-900";
+        if (control.risk_level === "HIGH") riskClass = "text-red-500 font-semibold";
+        if (control.risk_level === "MEDIUM") riskClass = "text-amber-500 font-semibold";
+        if (control.risk_level === "LOW") riskClass = "text-green-500 font-semibold";
+
+        return `
+            <tr class="border-b last:border-0">
+                <td class="py-3 pr-4">${control.control_id}</td>
+                <td class="py-3 pr-4">${(control.failure_probability * 100).toFixed(2)}%</td>
+                <td class="py-3 pr-4 ${riskClass}">${control.risk_level}</td>
+                <td class="py-3">${control.updated_at || "-"}</td>
+            </tr>
+        `;
+    }).join("");
+}
+
+async function loadTrend() {
+    const trend = await fetchJson("/dashboard/risk-trend");
+    renderTrendChart(trend);
+}
+
+async function initDashboard() {
+    try {
+        await Promise.all([loadSummary(), loadControls(), loadTrend()]);
+    } catch (error) {
+        const tbody = document.getElementById("controlsTableBody");
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="py-4 text-red-500">${error.message}</td>
+            </tr>
+        `;
+    }
+}
+
+initDashboard();
+</script>
+{% endblock %}

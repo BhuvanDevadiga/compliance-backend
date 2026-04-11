@@ -2,11 +2,12 @@ from datetime import date
 from sqlalchemy import func
 
 from app.db.database import SessionLocal
-from app.models.audit_log import RequestAuditLog
+from app.models.request_audit_log import RequestAuditLog
+
 
 
 def get_tenant_usage_summary(
-    tenant_id: int,
+    tenant_id: str,
     start_date: date | None = None,
     end_date: date | None = None,
 ):

@@ -1,4 +1,4 @@
-from app.models.risk import RiskAssessment
+from app.models.risk_assessment import RiskAssessment
 
 def save_risk_assessment(db, data):
     assessment = RiskAssessment(**data)

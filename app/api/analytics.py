@@ -22,7 +22,7 @@ def tenant_usage_analytics(
     tenant: Tenant = Depends(get_current_tenant),
 ):
     return get_tenant_usage_summary(
-        tenant_id=tenant.id,
+        tenant_id=tenant.tenant_id,
         start_date=start_date,
         end_date=end_date,
     )

@@ -1,0 +1,76 @@
+﻿services:
+
+  db:
+    image: postgres:15
+    container_name: compliance_postgres
+    restart: always
+    command: ["postgres", "-c", "max_connections=300"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    container_name: compliance_api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - python -m app.db._init_db && python -m app.bootstrap.demo_tenant_seed && exec gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000 --workers ${WEB_CONCURRENCY:-4} --timeout 120
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@compliance_postgres:5432/postgres
+      WEB_CONCURRENCY: "4"
+      GUNICORN_TIMEOUT: "240"
+      GUNICORN_GRACEFUL_TIMEOUT: "30"
+      GUNICORN_KEEPALIVE: "5"
+      AUTONOMOUS_CYCLE_INTERVAL_SECONDS: "180"
+      DB_POOL_SIZE: "30"
+      DB_MAX_OVERFLOW: "30"
+      DB_POOL_TIMEOUT: "120"
+      ENABLE_BACKGROUND_WORKERS: "false"
+      ENABLE_PROFILER_THREAD: "false"
+      ENABLE_AUDIT_MIDDLEWARE: "false"
+      ENABLE_QUOTA_MIDDLEWARE: "false"
+      ENABLE_RATE_LIMITER: "false"
+      RATE_LIMIT_RULE: "100/minute;200/second"
+      REDIS_URL: "redis://redis:6379"
+    ports:
+      - "8000:8000"
+
+  redis:
+    image: redis:7
+    container_name: compliance_redis
+    ports:
+      - "6379:6379"
+    restart: always
+
+  locust:
+    image: locustio/locust:2.43.3
+    container_name: compliance_locust
+    depends_on:
+      - api
+    volumes:
+      - ./load_test.py:/mnt/locust/load_test.py:ro
+    command: -f /mnt/locust/load_test.py --host=http://api:8000
+    ports:
+      - "8089:8089"
+
+volumes:
+  postgres_data:

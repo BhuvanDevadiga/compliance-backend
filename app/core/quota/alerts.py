@@ -54,9 +54,7 @@ def _fire_once(
     used: int,
     limit: int,
 ):
-    """
-    Ensures each alert fires only once per day per tenant per level.
-    """
+    
 
     key = (tenant_id, today, level)
 

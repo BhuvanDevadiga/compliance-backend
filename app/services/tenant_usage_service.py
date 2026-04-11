@@ -6,6 +6,9 @@ from app.models.tenant_usage_daily import TenantUsageDaily
 from app.services.quota_alerts import maybe_fire_quota_alert
 from app.services.abuse_detection import detect_usage_spike
 
+from app.db.database import SessionLocal
+
+db = SessionLocal()
 
 # -------------------------
 # EXISTING FUNCTIONS (KEEP)
@@ -114,14 +117,14 @@ def record_tenant_request(
     """
 
     # 1️⃣ increment counters
-    increment_tenant_usage(db, tenant.id, path, method)
-    increment_daily_usage(db, tenant.id, path, method)
+    increment_tenant_usage(db, tenant.tenant_id, path, method)
+    increment_daily_usage(db, tenant.tenant_id, path, method)
 
     # 2️⃣ quota alert (C1)
-    used_today = get_today_usage(db, tenant.id)
+    used_today = get_today_usage(db, tenant.tenant_id)
 
     maybe_fire_quota_alert(
-        tenant_id=tenant.id,
+        tenant_id=tenant.tenant_id,
         plan=tenant.plan,
         daily_limit=tenant.daily_limit,  # ← TEMP: 2 for testing
         used_today=used_today,
@@ -133,7 +136,7 @@ def record_tenant_request(
     recent_count = used_today  # acceptable for now
 
     detect_usage_spike(
-        tenant_id=tenant.id,
+        tenant_id=tenant.tenant_id,
         recent_count=recent_count,
         baseline_per_minute=baseline_per_minute,
     )

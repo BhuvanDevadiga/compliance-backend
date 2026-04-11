@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, Date, DateTime, func
 from app.db.base import Base
 
+
+
 class TenantUsage(Base):
     __tablename__ = "tenant_usage"
 

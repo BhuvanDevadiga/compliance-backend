@@ -2,12 +2,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date
 
-from app.models.audit_log import RequestAuditLog
+from app.models.request_audit_log import RequestAuditLog
+
 
 
 def get_tenant_usage_summary(
     db: Session,
-    tenant_id: int,
+    tenant_id: str,
     day: date | None = None,
 ):
     """
@@ -37,7 +38,7 @@ def get_tenant_usage_summary(
 
 def get_tenant_endpoint_breakdown(
     db: Session,
-    tenant_id: int,
+    tenant_id: str,
     day: date | None = None,
 ):
     """

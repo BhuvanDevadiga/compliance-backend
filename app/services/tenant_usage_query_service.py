@@ -6,7 +6,7 @@ from app.models.tenant_usage_daily import TenantUsageDaily
 def get_usage_today(db: Session, tenant_id: str):
     today = date.today()
 
-    return (
+    rows = (
         db.query(
             TenantUsageDaily.path,
             TenantUsageDaily.method,
@@ -19,6 +19,16 @@ def get_usage_today(db: Session, tenant_id: str):
         )
         .all()
     )
+
+    return [
+        {
+            "path": r.path,
+            "method": r.method,
+            "request_count": r.request_count,
+            "last_seen": r.last_seen,
+        }
+        for r in rows
+    ]
 
 
 def get_usage_last_n_days(db: Session, tenant_id: str, days: int):
