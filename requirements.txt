@@ -1,5 +1,7 @@
 fastapi
 uvicorn
+gunicorn
+slowapi
 sqlalchemy
 psycopg2-binary
 python-dotenv
@@ -10,3 +12,11 @@ boto3
 openai
 celery
 redis
+numpy
+scipy
+scikit-learn
+cryptography
+python-dateutil
+joblib
+pyyaml
+apscheduler
