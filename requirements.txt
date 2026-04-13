@@ -22,3 +22,5 @@ pydantic>=2.0.0
 starlette>=0.28.0
 python-jose[cryptography]>=3.3.0
 reportlab
+python-json-logger
+apscheduler
