@@ -21,3 +21,4 @@ locust>=2.15.0
 pydantic>=2.0.0
 starlette>=0.28.0
 python-jose[cryptography]>=3.3.0
+reportlab
