@@ -8,3 +8,5 @@ slowapi
 python-multipart
 numpy
 scikit-learn
+bcrypt
+joblib
